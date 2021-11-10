@@ -11,11 +11,22 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class startServer {
-    private static final int SERVER_PORT = 9999;
-    private final ExecutorService poll = Executors.newFixedThreadPool (64);
+public class Server implements Runnable {
+    public static final String GET = "GET";
+    public static final String POST = "POST";
+    private Socket socket;
+    final List<String> allowedMethods = of (GET, POST);
+    final int limit = 4096;
 
-    public void start () {
+
+    public Server ( Socket socket ) {
+        this.socket = socket;
+    }
+
+    public void startServer () {
+        final int SERVER_PORT = 9999;
+        final ExecutorService poll = Executors.newFixedThreadPool (64);
+
         try (var serverSocket = new ServerSocket (SERVER_PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept ();
@@ -27,30 +38,16 @@ class startServer {
         }
         System.out.println ("Ожидание подключения...");
     }
-}
-
-public class Server implements Runnable {
-    public static final String GET = "GET";
-    public static final String POST = "POST";
-    private final Socket socket;
-    final List<String> allowedMethods = of (GET, POST);
-    final int limit = 4096;
-
-
-    public Server ( Socket socket ) {
-        this.socket = socket;
-    }
 
     final List<String> validPaths = of ("/index.html", "/spring.svg",
             "/spring.png", "/resources.html", "/styles.css", "/app.js",
             "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
 
 
-    @Override
     public void run () {
         try {
-            final var in = new BufferedInputStream (socket.getInputStream ());
-            final var out = new BufferedOutputStream (socket.getOutputStream ());
+            final var in = new BufferedInputStream (this.socket.getInputStream ());
+            final var out = new BufferedOutputStream (this.socket.getOutputStream ());
 
             // лимит на request line + заголовки
             in.mark (limit);
