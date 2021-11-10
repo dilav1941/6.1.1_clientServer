@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Server implements Runnable {
+public class Server {
     public static final String GET = "GET";
     public static final String POST = "POST";
     private Socket socket;
@@ -30,8 +30,7 @@ public class Server implements Runnable {
         try (var serverSocket = new ServerSocket (SERVER_PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept ();
-                Server server = new Server (socket);
-                poll.execute (server);
+                poll.execute (()->this.request(socket));
             }
         } catch (IOException ex) {
             ex.getMessage ();
@@ -44,7 +43,7 @@ public class Server implements Runnable {
             "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
 
 
-    public void run () {
+    public void request (Socket socket) {
         try {
             final var in = new BufferedInputStream (this.socket.getInputStream ());
             final var out = new BufferedOutputStream (this.socket.getOutputStream ());
